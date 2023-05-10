@@ -6,8 +6,8 @@ import apiService from "./services/api.service";
 import CurrentDayLessons from "./CurrentDayLessons";
 import MenuButton from "./MenuButton";
 
-export default function StudentSchelude({ route, navigation }) {
-    const student = route.params.student
+export default function LecturerSchelude({ route, navigation }) {
+    const lecturer = route.params.lecturer
     const [selected, setSelected] = useState('');
     const [lessons, setLessons] = useState([])
     const [markedDays, setMarkedDays] = useState({})
@@ -21,7 +21,7 @@ export default function StudentSchelude({ route, navigation }) {
 
     useEffect(() => {
         if (!lessonsLoaded) {
-            apiService.getLessons(student.id).then(r => {
+            apiService.getLessons(lecturer.id).then(r => {
                 setLessons(r.data.sort((a, b) => new Date(a.date) - new Date(b.date)))
                 r.data.map(d => {
                     const date = dayjs(d.date).format('YYYY-MM-DD')
@@ -56,7 +56,7 @@ export default function StudentSchelude({ route, navigation }) {
 
     return (
         <>
-            <MenuButton student={student} />
+            <MenuButton lecturer={lecturer} />
             {
                 lessonsLoaded ?
                     <>

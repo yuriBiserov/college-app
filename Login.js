@@ -10,20 +10,21 @@ import { Controller, useForm } from "react-hook-form";
 import apiService from './services/api.service';
 import storageService from "./services/storage.service";
 import { LogBox, Text } from 'react-native';
+import SignedAsContext from "./services/GlobalContext";
+import { useContext } from "react";
 LogBox.ignoreLogs([
     'Require cycle:'
 ])
 
 export default function Login(props) {
+    const { signed, setSigned } = useContext(SignedAsContext);
     const [show, setShow] = useState(false)
     const [loading, setLoading] = useState(false)
     const [loginFailed, setLoginFailed] = useState('')
-    const [isTrue, setIsTrue] = useState(true)
-    const [statusSelected, setStatusSelected] = useState('Student')
+    // const [signAs, setSignAs] = useState("Student")
 
-    function textChange() {
-        setIsTrue(!isTrue)
-        return isTrue ? setStatusSelected('Lecturer') : setStatusSelected("Student")
+    function signStateChange() {
+        signed == 'Lecturer' ? setSigned("Student") : setSigned("Lecturer")
     }
 
     const { control, handleSubmit, getValues, setValue, formState: { errors } } = useForm({
@@ -34,6 +35,17 @@ export default function Login(props) {
     });
 
     useEffect(() => {
+        //check who was signed last time , Lecturer or Student
+        storageService.getData('SignedAs').then((data) => {
+            console.log(data)
+            if(data){
+                setSigned(data)
+            }else{
+                setSigned("Student")
+            }
+        })
+
+        //set form values of last signed user 
         storageService.getData('id').then(i => {
             storageService.getData('password').then(p => {
                 if (i && p) {
@@ -45,15 +57,16 @@ export default function Login(props) {
     }, [])
 
     const onSubmit = (data) => {
-        if (statusSelected == 'Student') {
+        if (signed == 'Student') {
             setLoginFailed('')
-            storageService.clearAllData().then()
             setLoading(true)
             apiService.loginStudent(data).then(r => {
                 const student = r.data.student
                 storageService.storeData('token', r.data.token).then(r => {
                     storageService.getData('token').then(token => {
                         if (token) {
+                            storageService.storeData('SignedAs' , "Student")
+                            setSigned('Student')
                             storageService.storeData('id', getValues('id')).then()
                             storageService.storeData('password', getValues('password')).then()
                             props.navigation.navigate('StudentSchelude', { student })
@@ -67,43 +80,41 @@ export default function Login(props) {
                 setLoading(false)
                 setLoginFailed('Wrong ID Or Password')
             })
-        } else if (statusSelected == 'Lecturer') {
-            alert('lecturer schelude component')
-            // setLoginFailed('')
-            // storageService.clearAllData().then()
-            // setLoading(true)
-            // apiService.loginLecturer(data).then(r => {
-            //     const lecturer = r.data.lecturer
-            //     storageService.storeData('token', r.data.token).then(r => {
-            //         storageService.getData('token').then(token => {
-            //             if (token) {
-            //                 storageService.storeData('id', getValues('id')).then()
-            //                 storageService.storeData('password', getValues('password')).then()
-            //                 props.navigation.navigate('Schelude', { lecturer })
-            //             }
-            //             setLoading(false)
-            //         })
-            //     }, err => {
-            //         setLoading(false)
-            //     })
-            // }, err => {
-            //     setLoading(false)
-            //     setLoginFailed('Wrong ID Or Password')
-            // })
-
-
+        } else if (signed == 'Lecturer') {
+            setLoginFailed('')
+            storageService.clearAllData().then()
+            setLoading(true)
+            apiService.loginLecturer(data).then(r => {
+                const lecturer = r.data.lecturer
+                storageService.storeData('token', r.data.token).then(r => {
+                    storageService.getData('token').then(token => {
+                        if (token) {
+                            storageService.storeData('SignedAs' , "Lecturer")
+                            setSigned('Lecturer')
+                            storageService.storeData('id', getValues('id')).then()
+                            storageService.storeData('password', getValues('password')).then()
+                            props.navigation.navigate('LecturerSchelude', { lecturer })
+                        }
+                        setLoading(false)
+                    })
+                }, err => {
+                    setLoading(false)
+                })
+            }, err => {
+                setLoading(false)
+                setLoginFailed('Wrong ID Or Password')
+            })
         }
-
     };
 
     return (
         <Center flex={1} px="3">
             <Stack space={4} w="100%" alignItems="center">
                 <Button
-                    onPress={textChange}
+                    onPress={() => signStateChange()}
                     w={{ base: "75%", md: "25%" }}
                     backgroundColor='#a6a6a6'>
-                    {statusSelected}
+                    {signed}
                 </Button>
                 {errors.id && <Text style={{ color: 'red' }}>ID is required</Text>}
                 <Controller

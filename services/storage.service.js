@@ -16,7 +16,6 @@ const getData = async (key) => {
     } catch (e) {
         return false
     }
-    return false
 }
 const clearAllData = async () => {
     AsyncStorage.getAllKeys()
