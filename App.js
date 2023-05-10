@@ -20,11 +20,11 @@ export default function App() {
         <Drawer.Navigator initialRouteName="Login">
           <Drawer.Screen
             options=
-            {{
-              swipeEnabled: false,
-              headerLeft: () => (<MenuButton onPress={() => navigation.toggleDrawer()} />),
-              drawerItemStyle: { height: 0 }
-            }}
+            // {{
+            //   swipeEnabled: false,
+            //   headerLeft: () => (<MenuButton onPress={() => navigation.toggleDrawer()} />),
+            //   drawerItemStyle: { height: 0 }
+            // }}
             name="Login" component={Login} />
           <Drawer.Screen name="StudentSchelude" options={{title:'Schelude'}} component={StudentSchelude} />
           <Drawer.Screen name="Logout" component={Logout} />
