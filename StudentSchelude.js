@@ -21,7 +21,7 @@ export default function StudentSchelude({ route, navigation }) {
 
     useEffect(() => {
         if (!lessonsLoaded) {
-            apiService.getLessons(student.id).then(r => {
+            apiService.getStudentLessons(student.id).then(r => {
                 setLessons(r.data.sort((a, b) => new Date(a.date) - new Date(b.date)))
                 r.data.map(d => {
                     const date = dayjs(d.date).format('YYYY-MM-DD')

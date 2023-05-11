@@ -59,6 +59,7 @@ export default function Login(props) {
     const onSubmit = (data) => {
         if (signed == 'Student') {
             setLoginFailed('')
+            storageService.clearAllData().then(() => {})
             setLoading(true)
             apiService.loginStudent(data).then(r => {
                 const student = r.data.student
@@ -67,8 +68,8 @@ export default function Login(props) {
                         if (token) {
                             storageService.storeData('SignedAs' , "Student")
                             setSigned('Student')
-                            storageService.storeData('id', getValues('id')).then()
-                            storageService.storeData('password', getValues('password')).then()
+                            storageService.storeData('id', getValues('id')).then(() => {})
+                            storageService.storeData('password', getValues('password')).then(() => {})
                             props.navigation.navigate('StudentSchelude', { student })
                         }
                         setLoading(false)
@@ -82,7 +83,6 @@ export default function Login(props) {
             })
         } else if (signed == 'Lecturer') {
             setLoginFailed('')
-            storageService.clearAllData().then()
             setLoading(true)
             apiService.loginLecturer(data).then(r => {
                 const lecturer = r.data.lecturer
@@ -91,8 +91,8 @@ export default function Login(props) {
                         if (token) {
                             storageService.storeData('SignedAs' , "Lecturer")
                             setSigned('Lecturer')
-                            storageService.storeData('id', getValues('id')).then()
-                            storageService.storeData('password', getValues('password')).then()
+                            storageService.storeData('id', getValues('id')).then(() => {})
+                            storageService.storeData('password', getValues('password')).then(() => {})
                             props.navigation.navigate('LecturerSchelude', { lecturer })
                         }
                         setLoading(false)
@@ -116,11 +116,11 @@ export default function Login(props) {
                     backgroundColor='#a6a6a6'>
                     {signed}
                 </Button>
-                {errors.id && <Text style={{ color: 'red' }}>ID is required</Text>}
+                {errors.id && <Text style={{ color: 'red' }}>Length Must be 9 Digits</Text>}
                 <Controller
                     control={control}
                     rules={{
-                        required: true,
+                        required: true, maxLength: 9 , minLength:9
                     }}
                     render={({ field: { onChange, onBlur, value } }) => (
                         <Input

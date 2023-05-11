@@ -1,21 +1,26 @@
 import { Text, View } from 'react-native';
 import * as Location from 'expo-location'
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button, Icon, Row, ScrollView } from 'native-base';
 import { Path } from 'react-native-svg';
 import dayjs from 'dayjs';
 import apiService from './services/api.service';
 import storageService from './services/storage.service';
 import Distance from './services/CheckDistance';
+import SignedAsContext from './services/GlobalContext';
+import { Modal } from "native-base";
 
 export default function CurrentDayLessons(props) {
     const selectedDay = props.selected || dayjs()
+    const { signed, setSigned } = useContext(SignedAsContext);
     let [studentId, setStudentId] = useState('')
     const [sending, setSending] = useState(false)
-    let location = {lat:0 ,lon:0 }
-    const lectLocation = { lat: 32.705264, lon: 35.591066 }
+    const [showModal, setShowModal] = useState(false);
+    let location = { lat: 0, lon: 0 }
+    const [attendancyList, setAttendancyList] = useState([])
+    const [currentLessonsModal, setCurrentLessonModal] = useState({})
 
-    function useForceUpdate(){
+    function useForceUpdate() {
         const [value, setValue] = useState(0);
         return () => setValue(value => value + 1);
     }
@@ -43,16 +48,37 @@ export default function CurrentDayLessons(props) {
         }
     }
 
-    const attendance = (lesson) => {
-        if (isLessonInPast(lesson) && !(lesson.attendance.some(a => a == studentId))) {
-            return 'NotSent'
+    const attendanceButton = (lesson) => {
+        if (signed == 'Student') {
+
+            if (isLessonInPast(lesson) && !(lesson.attendance.some(a => a == studentId))) {
+                return 'AttendanceNotRecorded'
+            }
+            if (lesson.attendance.some(a => a == studentId)) {
+                return 'AttendanceSent'
+            }
+            if (isOngoingLesson(lesson) && !(lesson.attendance.some(a => a == studentId)) && lesson.latitude && lesson.longitude) {
+                return 'SendAttendance'
+            }
+            if (isOngoingLesson(lesson) &&  !lesson.latitude && !lesson.longitude) {
+                return 'WaitForLocation'
+            }
         }
-        if (lesson.attendance.some(a => a == studentId)) {
-            return 'Sent'
+        if (signed == 'Lecturer') {
+            if (isOngoingLesson(lesson) &&  !lesson.latitude && !lesson.longitude) {
+                return 'AllowSending'
+            }
+            if (isOngoingLesson(lesson) && lesson.latitude && lesson.longitude) {
+                return 'SendingAllowed'
+            }
+            if (isLessonInPast(lesson) && !lesson.latitude && !lesson.longitude) {
+                return 'DidntAllowToSend'
+            }
+            if (isLessonInPast(lesson) && lesson.latitude && lesson.longitude) {
+                return 'CheckAttendancy'
+            }
         }
-        if (isOngoingLesson(lesson) && !(lesson.attendance.some(a => a == studentId))) {
-            return 'OngoingLesson'
-        }
+
     }
 
     async function getLocation() {
@@ -63,7 +89,7 @@ export default function CurrentDayLessons(props) {
                 location.lon = r.coords.longitude
             })
         }
-        
+
     }
 
     const sendAttendance = (l) => {
@@ -87,23 +113,58 @@ export default function CurrentDayLessons(props) {
     const handleSend = async (l) => {
         setSending(true)
 
-        //check if lesson in class
-        if (l.in_class) {
-            await getLocation().then((r) => {
-                const inRadius = Distance.getDistanceFromLatLonInMeters( location.lat , location.lon  , lectLocation.lat , lectLocation.lon  ) < 50
-                if (!inRadius) {
-                    alert("You not in class")
-                } else {
-                    sendAttendance(l)
+        if (signed == 'Student') {
+            //check if lesson in class
+            if (l.in_class) {
+                await getLocation().then(() => {
+                    const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 50
+                    if (!inRadius) {
+                        alert("You not in class")
+                    } else {
+                        sendAttendance(l)
+                        setSending(false)
+                    }
+                    console.log(l.latitude + " " + l.longitude + " Lecturer Location")
+                    console.log(location.lat + " " + location.lon + " Student Location")
+
                     setSending(false)
-                }
+                }, err => setSending(false))
+            } else {
+                //lesson in zoom , just send attendance 
+                sendAttendance(l)
                 setSending(false)
-            },err=> setSending(false))
-        } else {
-            //lesson in zoom , just send attendance 
-            sendAttendance(l)
-            setSending(false)
+            }
         }
+        if (signed == 'Lecturer') {
+            if (l.in_class) {
+                await getLocation().then(() => {
+                    l.latitude = location.lat
+                    l.longitude = location.lon
+                    apiService.setLesson(l).then(() => { })
+                    setSending(false)
+                }, err => setSending(false))
+
+            }
+        }
+
+    }
+
+    const checkAttendancy = (lesson) => {
+        setAttendancyList([])
+        setCurrentLessonModal(lesson)
+        if (currentLessonsModal) {
+            console.log(currentLessonsModal?.course?.name)
+        }
+        let students = lesson.students
+        students.map((student) => {
+            if (lesson.attendance.some((aten) => aten == student.id)) {
+                student.present = true
+            } else {
+                student.present = false
+            }
+        })
+        setShowModal(true)
+        setAttendancyList(students)
     }
 
     useEffect(() => {
@@ -140,28 +201,37 @@ export default function CurrentDayLessons(props) {
                                 </Row>
                             </View>
                             {
-                                attendance(l) == 'OngoingLesson' &&
+                                attendanceButton(l) == 'SendAttendance' &&
                                 <Row style={{ alignItems: 'center' }}>
                                     <Button
                                         isLoading={sending}
                                         isLoadingText="Sending..."
-                                        onPress={e => handleSend(l)}
+                                        onPress={() => handleSend(l)}
                                         style={{ height: 45, backgroundColor: '#3a88fd' }}>
                                         Send Attendance
                                     </Button>
                                 </Row>
                             }
                             {
-                                attendance(l) == 'Sent' &&
+                                attendanceButton(l) == 'AttendanceSent' &&
                                 <Row style={{ alignItems: 'center' }}>
                                     <Button
-                                        style={{ height: 45, backgroundColor: '#54df2a' }}>
+                                        style={{ height: 45, backgroundColor: '#4fbe2d' }}>
                                         Attendance Sent!
                                     </Button>
                                 </Row>
                             }
                             {
-                                attendance(l) == 'NotSent' &&
+                                attendanceButton(l) == 'WaitForLocation' &&
+                                <Row style={{ alignItems: 'center' }}>
+                                    <Button
+                                        style={{ height: 45, backgroundColor: '#6c757d' }}>
+                                        Wait for Location...
+                                    </Button>
+                                </Row>
+                            }
+                            {
+                                attendanceButton(l) == 'AttendanceNotRecorded' &&
                                 <Row style={{ alignItems: 'center' }}>
                                     <Button
                                         style={{ height: 45, backgroundColor: '#ff7070' }}>
@@ -169,10 +239,98 @@ export default function CurrentDayLessons(props) {
                                     </Button>
                                 </Row>
                             }
+                            {
+                                attendanceButton(l) == 'AllowSending' &&
+                                <Row style={{ alignItems: 'center' }}>
+                                    <Button
+                                        isLoading={sending}
+                                        isLoadingText="Sending Location..."
+                                        onPress={() => handleSend(l)}
+                                        style={{ height: 45, backgroundColor: '#3a88fd' }}>
+                                        Allow Sending
+                                    </Button>
+                                </Row>
+                            }
+                            {
+                                attendanceButton(l) == 'SendingAllowed' &&
+                                <Row style={{ alignItems: 'center' }}>
+                                    <Button
+                                        style={{ height: 45, backgroundColor: '#4fbe2d' }}>
+                                        Sending atendance allowed
+                                    </Button>
+                                </Row>
+                            }
+                            {
+                                attendanceButton(l) == 'DidntAllowToSend' &&
+                                <Row style={{ alignItems: 'center' }}>
+                                    <Button
+                                        style={{ height: 45, backgroundColor: '#ff7070' }}>
+                                        Didn't sent Location!
+                                    </Button>
+                                </Row>
+                            }
+                            {
+                                attendanceButton(l) == 'CheckAttendancy' &&
+                                <Row style={{ alignItems: 'center' }}>
+                                    <Button
+                                        isLoadingText="Sending..."
+                                        onPress={() => checkAttendancy(l)}
+                                        style={{ height: 45, backgroundColor: '#4fbe2d' }}>
+                                        Check Attendance
+                                    </Button>
+                                </Row>
+                            }
                         </Row>
                     </View>
                 })}
             </ScrollView>
+
+
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+                <Modal.Content width="100%">
+                    <Modal.CloseButton />
+                    <Modal.Header>
+                        <Row>
+                            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{currentLessonsModal?.major} - {currentLessonsModal?.course?.name}</Text>
+                        </Row>
+                        <Row>
+                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{dayjs(currentLessonsModal?.date).format('dddd, MMMM D')}</Text>
+                        </Row>
+                    </Modal.Header>
+                    <ScrollView style={{ padding: 20 }}>
+                        <Row style={{ marginBottom: 18 }}>
+                            <Row style={{ width: '30%' }}>
+                                <Text style={{ fontWeight: 'bold' , fontSize:16 }}>ID</Text>
+                            </Row>
+                            <Row style={{ width: '50%' }}>
+                                <Text style={{ fontWeight: 'bold' , fontSize:16}}>Fist Name</Text>
+                            </Row>
+                            <Row style={{ width: '20%' }}>
+                                <Text style={{ fontWeight: 'bold' , fontSize:16}}>Present</Text>
+                            </Row>
+                        </Row>
+                        {
+                            attendancyList &&
+                            attendancyList.map((student , idx) => {
+                                return <Row key={idx} style={{ marginBottom: 12,paddingBottom:12, borderBottomColor: '#ebebeb', borderBottomWidth: 1, }}>
+                                    <Row style={{ width: '30%' }}>
+                                        <Text>{student.id}</Text>
+                                    </Row>
+                                    <Row style={{ width: '50%' }}>
+                                        <Text>{student.first_name} {student.last_name}</Text>
+                                    </Row>
+                                    <Row style={{ width: '20%', justifyContent: 'center' }}>
+                                        <Text>{student.present ?
+                                            <Icon xmlSpace="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512"><Path fill="#99e384" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"></Path></Icon>
+                                            :
+                                            <Icon xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512"><Path fill="#ff7070" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></Icon>}</Text>
+                                    </Row>
+                                </Row>
+                            })
+                        }
+                    </ScrollView>
+                </Modal.Content>
+            </Modal>
         </>
     );
 }

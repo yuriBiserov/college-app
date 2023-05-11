@@ -21,7 +21,7 @@ export default function LecturerSchelude({ route, navigation }) {
 
     useEffect(() => {
         if (!lessonsLoaded) {
-            apiService.getLessons(lecturer.id).then(r => {
+            apiService.getLecturerLessons(lecturer.id).then(r => {
                 setLessons(r.data.sort((a, b) => new Date(a.date) - new Date(b.date)))
                 r.data.map(d => {
                     const date = dayjs(d.date).format('YYYY-MM-DD')

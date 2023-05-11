@@ -8,8 +8,11 @@ const loginStudent = (student) => {
 const loginLecturer = (lecturer) => {
     return axios.post(`${API_URL}/lecturer/login`, lecturer)
 }
-const getLessons = (id) => {
+const getStudentLessons = (id) => {
     return axios.get(`${API_URL}/lessons/get-lessons/${id}`)
+}
+const getLecturerLessons = (id) => {
+    return axios.get(`${API_URL}/lessons/get-lessons/lecturer/${id}`)
 }
 const sendAttendance = (lesson,student) => {
     return axios.post(`${API_URL}/lessons/attendance`, lesson,student)
@@ -20,13 +23,18 @@ const getAttendance = (studentId,lessonId) => {
 const getStudent = (id) => {
     return axios.get(`${API_URL}/student/get-student/${id}`)
 }
+const setLesson = (lesson) => {
+    return axios.post(`${API_URL}/lessons/create-lesson`,lesson)
+}
 
 
 export default {
     loginStudent,
     loginLecturer,
-    getLessons,
+    getStudentLessons,
+    getLecturerLessons,
     sendAttendance,
     getAttendance,
-    getStudent
+    getStudent,
+    setLesson
 }
