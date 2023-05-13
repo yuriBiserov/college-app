@@ -13,6 +13,7 @@ import LecturerSchelude from './LecturerSchelude';
 import { useState } from 'react';
 import SignedAsContext from './services/GlobalContext';
 import { useEffect } from 'react';
+import AttendanceList from './AttendanceList';
 
 export default function App() {
   const Drawer = createDrawerNavigator();
@@ -41,7 +42,7 @@ export default function App() {
             <Drawer.Screen
               name="StudentSchelude"
               options={{
-                title: 'Student Schelude',
+                title: 'Schelude',
                 drawerItemStyle: { display: signed == 'Lecturer' ? 'none' : 'flex' }
               }}
               component={StudentSchelude}
@@ -49,10 +50,19 @@ export default function App() {
             <Drawer.Screen
               name="LecturerSchelude"
               options={{
-                title: 'Lecturer Schelude',
+                title: 'Schelude',
                 drawerItemStyle: { display: signed == 'Student' ? 'none' : 'flex' }
               }}
-              component={LecturerSchelude} />
+              component={LecturerSchelude}
+            />
+             <Drawer.Screen
+              name="AttendanceList"
+              options={{
+                title: 'Attendance',
+                drawerItemStyle: { display: signed == 'Student' ? 'none' : 'flex' }
+              }}
+              component={AttendanceList}
+            />
             <Drawer.Screen name="Logout" component={Logout} />
           </Drawer.Navigator>
         </NativeBaseProvider>
