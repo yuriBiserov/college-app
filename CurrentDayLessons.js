@@ -9,6 +9,7 @@ import storageService from './services/storage.service';
 import Distance from './services/CheckDistance';
 import SignedAsContext from './services/GlobalContext';
 import { Modal } from "native-base";
+import { PixelRatio } from 'react-native';
 
 export default function CurrentDayLessons(props) {
     const selectedDay = props.selected || dayjs()
@@ -60,12 +61,12 @@ export default function CurrentDayLessons(props) {
             if (isOngoingLesson(lesson) && !(lesson.attendance.some(a => a == studentId)) && lesson.latitude && lesson.longitude) {
                 return 'SendAttendance'
             }
-            if (isOngoingLesson(lesson) &&  !lesson.latitude && !lesson.longitude) {
+            if (isOngoingLesson(lesson) && !lesson.latitude && !lesson.longitude) {
                 return 'WaitForLocation'
             }
         }
         if (signed == 'Lecturer') {
-            if (isOngoingLesson(lesson) &&  !lesson.latitude && !lesson.longitude) {
+            if (isOngoingLesson(lesson) && !lesson.latitude && !lesson.longitude) {
                 return 'AllowSending'
             }
             if (isOngoingLesson(lesson) && lesson.latitude && lesson.longitude) {
@@ -152,9 +153,7 @@ export default function CurrentDayLessons(props) {
     const checkAttendancy = (lesson) => {
         setAttendancyList([])
         setCurrentLessonModal(lesson)
-        if (currentLessonsModal) {
-            console.log(currentLessonsModal?.course?.name)
-        }
+        
         let students = lesson.students
         students.map((student) => {
             if (lesson.attendance.some((aten) => aten == student.id)) {
@@ -202,68 +201,87 @@ export default function CurrentDayLessons(props) {
                             </View>
                             {
                                 attendanceButton(l) == 'SendAttendance' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
+                                        startIcon={
+                                            <Icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><Path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></Icon>
+                                        }
                                         isLoading={sending}
                                         isLoadingText="Sending..."
                                         onPress={() => handleSend(l)}
-                                        style={{ height: 45, backgroundColor: '#3a88fd' }}>
+                                        style={{ backgroundColor: '#3a88fd' }}>
                                         Send Attendance
                                     </Button>
                                 </Row>
                             }
                             {
                                 attendanceButton(l) == 'AttendanceSent' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
-                                        style={{ height: 45, backgroundColor: '#4fbe2d' }}>
+                                        startIcon={
+                                            <Icon xmlSpace="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><Path fill="#cef490" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"></Path></Icon>
+                                        }
+                                        style={{ backgroundColor: '#4fbe2d' }}>
                                         Attendance Sent!
                                     </Button>
                                 </Row>
                             }
-                            {
+                            {/* {
                                 attendanceButton(l) == 'WaitForLocation' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
-                                        style={{ height: 45, backgroundColor: '#6c757d' }}>
+                                        style={{  backgroundColor: '#6c757d' }}>
                                         Wait for Location...
                                     </Button>
                                 </Row>
-                            }
+                            } */}
                             {
                                 attendanceButton(l) == 'AttendanceNotRecorded' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
-                                        style={{ height: 45, backgroundColor: '#ff7070' }}>
-                                        Attendance not Recorded!
+                                        startIcon={
+                                            <Icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><Path fill="#fff" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></Icon>
+                                        }
+                                        style={{ maxWidth: '95%', backgroundColor: '#ff7070' }}>
+                                        Attendance not Recorded
                                     </Button>
                                 </Row>
                             }
                             {
                                 attendanceButton(l) == 'AllowSending' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
                                         isLoading={sending}
                                         isLoadingText="Sending Location..."
                                         onPress={() => handleSend(l)}
-                                        style={{ height: 45, backgroundColor: '#3a88fd' }}>
-                                        Allow Sending
+                                        style={{ maxWidth: '95%', backgroundColor: '#3a88fd' }}
+                                        startIcon={
+                                            <Icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><Path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" /></Icon>
+                                        }
+                                    >
+                                        Set Lesson Location
                                     </Button>
                                 </Row>
                             }
                             {
                                 attendanceButton(l) == 'SendingAllowed' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
+                                        startIcon={
+                                            <Icon xmlSpace="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><Path fill="#cef490" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"></Path></Icon>
+                                        }
                                         style={{ height: 45, backgroundColor: '#4fbe2d' }}>
-                                        Sending atendance allowed
+                                        Location Sent
                                     </Button>
                                 </Row>
                             }
                             {
                                 attendanceButton(l) == 'DidntAllowToSend' &&
-                                <Row style={{ alignItems: 'center' }}>
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
                                     <Button
+                                        startIcon={
+                                            <Icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><Path fill="#fff" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></Icon>
+                                        }
                                         style={{ height: 45, backgroundColor: '#ff7070' }}>
                                         Didn't sent Location!
                                     </Button>
@@ -271,11 +289,16 @@ export default function CurrentDayLessons(props) {
                             }
                             {
                                 attendanceButton(l) == 'CheckAttendancy' &&
-                                <Row style={{ alignItems: 'center' }}>
-                                    <Button
+                                <Row style={{ justifyContent: 'flex-end', alignItems: 'center', flexShrink: 1 }}>
+                                    <Button _text={{
+                                        color: "#333",
+                                    }}
                                         isLoadingText="Sending..."
                                         onPress={() => checkAttendancy(l)}
-                                        style={{ height: 45, backgroundColor: '#4fbe2d' }}>
+                                        startIcon={
+                                            <Icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><Path fill='#333' d="M152.1 38.2c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 113C-2.3 103.6-2.3 88.4 7 79s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zm0 160c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 273c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zM224 96c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H256c-17.7 0-32-14.3-32-32zm0 160c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H256c-17.7 0-32-14.3-32-32zM160 416c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H192c-17.7 0-32-14.3-32-32zM48 368a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" /></Icon>
+                                        }
+                                        style={{ height: 45, backgroundColor: '#facc15' }}>
                                         Check Attendance
                                     </Button>
                                 </Row>
@@ -300,19 +323,19 @@ export default function CurrentDayLessons(props) {
                     <ScrollView style={{ padding: 20 }}>
                         <Row style={{ marginBottom: 18 }}>
                             <Row style={{ width: '30%' }}>
-                                <Text style={{ fontWeight: 'bold' , fontSize:16 }}>ID</Text>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>ID</Text>
                             </Row>
                             <Row style={{ width: '50%' }}>
-                                <Text style={{ fontWeight: 'bold' , fontSize:16}}>Fist Name</Text>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Name</Text>
                             </Row>
                             <Row style={{ width: '20%' }}>
-                                <Text style={{ fontWeight: 'bold' , fontSize:16}}>Present</Text>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Present</Text>
                             </Row>
                         </Row>
                         {
                             attendancyList &&
-                            attendancyList.map((student , idx) => {
-                                return <Row key={idx} style={{ marginBottom: 12,paddingBottom:12, borderBottomColor: '#ebebeb', borderBottomWidth: 1, }}>
+                            attendancyList.map((student, idx) => {
+                                return <Row key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottomColor: '#ebebeb', borderBottomWidth: 1, }}>
                                     <Row style={{ width: '30%' }}>
                                         <Text>{student.id}</Text>
                                     </Row>

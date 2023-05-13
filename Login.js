@@ -37,7 +37,6 @@ export default function Login(props) {
     useEffect(() => {
         //check who was signed last time , Lecturer or Student
         storageService.getData('SignedAs').then((data) => {
-            console.log(data)
             if(data){
                 setSigned(data)
             }else{
