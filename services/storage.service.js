@@ -17,6 +17,13 @@ const getData = async (key) => {
         return false
     }
 }
+const removeData = async (key) => {
+    try {
+        const value = await AsyncStorage.removeItem(`@${key}`)
+    } catch (e) {
+        return false
+    }
+}
 const clearAllData = async () => {
     AsyncStorage.getAllKeys()
         .then(keys => AsyncStorage.multiRemove(keys))
@@ -25,5 +32,6 @@ const clearAllData = async () => {
 export default {
     storeData,
     getData,
-    clearAllData
+    clearAllData,
+    removeData
 }

@@ -9,7 +9,6 @@ import storageService from './services/storage.service';
 import Distance from './services/CheckDistance';
 import SignedAsContext from './services/GlobalContext';
 import { Modal } from "native-base";
-import { PixelRatio } from 'react-native';
 
 export default function CurrentDayLessons(props) {
     const selectedDay = props.selected || dayjs()
@@ -25,6 +24,7 @@ export default function CurrentDayLessons(props) {
         const [value, setValue] = useState(0);
         return () => setValue(value => value + 1);
     }
+
 
     const forceUpdate = useForceUpdate();
 
@@ -66,10 +66,10 @@ export default function CurrentDayLessons(props) {
             }
         }
         if (signed == 'Lecturer') {
-            if (isOngoingLesson(lesson) && !lesson.latitude && !lesson.longitude) {
+            if (isOngoingLesson(lesson) && !lesson.latitude || lesson.latitude == 0 && !lesson.longitude || lesson.longitude == 0) {
                 return 'AllowSending'
             }
-            if (isOngoingLesson(lesson) && lesson.latitude && lesson.longitude) {
+            if (isOngoingLesson(lesson) && (lesson.latitude && lesson.latitude > 0) && (lesson.longitude && lesson.longitude > 0)) {
                 return 'SendingAllowed'
             }
             if (isLessonInPast(lesson) && !lesson.latitude && !lesson.longitude) {
@@ -82,14 +82,17 @@ export default function CurrentDayLessons(props) {
 
     }
 
-    async function getLocation() {
-        let { status } = await Location.requestForegroundPermissionsAsync()
-        if (status === 'granted') {
-            await Location.getCurrentPositionAsync({}).then((r) => {
-                location.lat = r.coords.latitude
-                location.lon = r.coords.longitude
-            })
-        }
+    const getLocation = async () => {
+        setSending(true)
+        await Location.getCurrentPositionAsync({}).then((r) => {
+            location.lat = r.coords.latitude
+            location.lon = r.coords.longitude
+            setSending(false)
+            console.log(location)
+        }, err => {
+            console.log(err)
+            setSending(false)
+        })
 
     }
 
@@ -98,7 +101,7 @@ export default function CurrentDayLessons(props) {
             id: studentId,
             lesson: l
         }
-        apiService.sendAttendance(attendance).then(r => {
+        apiService.sendAttendance(attendance).then(() => {
             let lessons = props.currentLessons
             lessons.map((a) => {
                 if (a._id == l._id) {
@@ -107,53 +110,50 @@ export default function CurrentDayLessons(props) {
             })
             props.setCurrentLessons(lessons)
             props.setSelected(dayjs().format('YYYY-MM-DD'))
-            forceUpdate()
+            // forceUpdate()
         })
     }
 
     const handleSend = async (l) => {
-        setSending(true)
-
         if (signed == 'Student') {
             //check if lesson in class
             if (l.in_class) {
                 await getLocation().then(() => {
-                    const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 50
+                    const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 30
                     if (!inRadius) {
-                        alert("You not in class")
+                        alert("You are too far from the!")
                     } else {
                         sendAttendance(l)
-                        setSending(false)
+                        props.setLessonsLoaded(false)
                     }
                     console.log(l.latitude + " " + l.longitude + " Lecturer Location")
                     console.log(location.lat + " " + location.lon + " Student Location")
-
-                    setSending(false)
-                }, err => setSending(false))
+                })
             } else {
                 //lesson in zoom , just send attendance 
                 sendAttendance(l)
-                setSending(false)
             }
         }
         if (signed == 'Lecturer') {
             if (l.in_class) {
-                await getLocation().then(() => {
-                    l.latitude = location.lat
-                    l.longitude = location.lon
-                    apiService.setLesson(l).then(() => { })
-                    setSending(false)
-                }, err => setSending(false))
-
+                await getLocation().then(r => {
+                    if(parseInt(location.lat) > 0 && parseInt(location.lon) > 0){
+                        l.latitude = location.lat
+                        l.longitude = location.lon
+                        console.log(location)
+                        apiService.setLesson(l).then(() => {
+                            props.setLessonsLoaded(false)
+                        })
+                    }
+                })
             }
         }
-
     }
 
     const checkAttendancy = (lesson) => {
         setAttendancyList([])
         setCurrentLessonModal(lesson)
-        
+
         let students = lesson.students
         students.map((student) => {
             if (lesson.attendance.some((aten) => aten == student.id)) {
@@ -181,7 +181,7 @@ export default function CurrentDayLessons(props) {
                         <Row style={{ marginBottom: 20, borderBottomColor: '#ebebeb', borderBottomWidth: 1, paddingBottom: 10, justifyContent: 'space-between' }}>
                             <View>
                                 <Row style={{ alignItems: 'center' }}>
-                                    <Text style={{ fontWeight: 'bold', }}>{l.major}</Text>
+                                    <Text style={{ fontWeight: 'bold', }}>{l.course.name}</Text>
                                 </Row>
 
                                 <Row style={{ alignItems: 'center' }}>

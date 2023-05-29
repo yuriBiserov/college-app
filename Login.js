@@ -35,6 +35,10 @@ export default function Login(props) {
     });
 
     useEffect(() => {
+        //remove from storage logged users
+        storageService.removeData('lecturer').then(() => {})
+        storageService.removeData('student').then(() => {})
+
         //check who was signed last time , Lecturer or Student
         storageService.getData('SignedAs').then((data) => {
             if(data){
@@ -69,6 +73,7 @@ export default function Login(props) {
                             setSigned('Student')
                             storageService.storeData('id', getValues('id')).then(() => {})
                             storageService.storeData('password', getValues('password')).then(() => {})
+                            storageService.storeData('student' , JSON.stringify(student)).then(() => {})
                             props.navigation.navigate('StudentSchelude', { student })
                         }
                         setLoading(false)
@@ -92,6 +97,7 @@ export default function Login(props) {
                             setSigned('Lecturer')
                             storageService.storeData('id', getValues('id')).then(() => {})
                             storageService.storeData('password', getValues('password')).then(() => {})
+                            storageService.storeData('lecturer' , JSON.stringify(lecturer)).then(() => {})
                             props.navigation.navigate('LecturerSchelude', { lecturer })
                         }
                         setLoading(false)
