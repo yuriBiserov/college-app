@@ -51,17 +51,16 @@ export default function CurrentDayLessons(props) {
 
     const attendanceButton = (lesson) => {
         if (signed == 'Student') {
-
             if (isLessonInPast(lesson) && !(lesson.attendance.some(a => a == studentId))) {
                 return 'AttendanceNotRecorded'
             }
             if (lesson.attendance.some(a => a == studentId)) {
                 return 'AttendanceSent'
             }
-            if (isOngoingLesson(lesson) && !(lesson.attendance.some(a => a == studentId)) && lesson.latitude && lesson.longitude) {
+            if (isOngoingLesson(lesson) && !(lesson.attendance.some(a => a == studentId)) && lesson.latitude && lesson.latitude > 0 && lesson.longitude && lesson.longitude > 0) {
                 return 'SendAttendance'
             }
-            if (isOngoingLesson(lesson) && !lesson.latitude && !lesson.longitude) {
+            if (isOngoingLesson(lesson) && !lesson.latitude || lesson.latitude == 0 && !lesson.longitude || lesson.longitude == 0) {
                 return 'WaitForLocation'
             }
         }
@@ -96,21 +95,14 @@ export default function CurrentDayLessons(props) {
 
     }
 
-    const sendAttendance = (l) => {
+    const sendAttendance = async (l) => {
         const attendance = {
             id: studentId,
             lesson: l
         }
-        apiService.sendAttendance(attendance).then(() => {
-            let lessons = props.currentLessons
-            lessons.map((a) => {
-                if (a._id == l._id) {
-                    a.attendance.push(studentId)
-                }
-            })
-            props.setCurrentLessons(lessons)
+        await apiService.sendAttendance(attendance).then(() => {
             props.setSelected(dayjs().format('YYYY-MM-DD'))
-            // forceUpdate()
+            props.setLessonsLoaded(false)
         })
     }
 
@@ -119,15 +111,18 @@ export default function CurrentDayLessons(props) {
             //check if lesson in class
             if (l.in_class) {
                 await getLocation().then(() => {
-                    const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 30
-                    if (!inRadius) {
-                        alert("You are too far from the!")
-                    } else {
-                        sendAttendance(l)
-                        props.setLessonsLoaded(false)
+                    if(parseInt(location.lat) > 0 && parseInt(location.lon)){
+                        const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 30
+                        if (!inRadius) {
+                            alert("You are too far from the!")
+                        } else {
+                            sendAttendance(l)
+                        }
+                        console.log(l.latitude + " " + l.longitude + " Lecturer Location")
+                        console.log(location.lat + " " + location.lon + " Student Location")
+                    }else{
+                        alert("Couldnt recieve location")
                     }
-                    console.log(l.latitude + " " + l.longitude + " Lecturer Location")
-                    console.log(location.lat + " " + location.lon + " Student Location")
                 })
             } else {
                 //lesson in zoom , just send attendance 

@@ -16,11 +16,13 @@ export default function StudentSchelude({ route, navigation }) {
     let dates = []
 
     useEffect(() => {
+        setLessonsLoaded(false)
         setSelected(dayjs().format('YYYY-MM-DD'))
     }, [])
 
     useEffect(() => {
         if (!lessonsLoaded) {
+            setCurrentLessons([])
             apiService.getStudentLessons(student.id).then(r => {
                 setLessons(r.data.sort((a, b) => new Date(a.date) - new Date(b.date)))
                 r.data.map(d => {
@@ -85,7 +87,7 @@ export default function StudentSchelude({ route, navigation }) {
                             }}
                         />
                         {currentLessons && currentLessons.length > 0 &&
-                            <CurrentDayLessons selected={selected} setSelected={setSelected} currentLessons={currentLessons} setCurrentLessons={setCurrentLessons} />
+                            <CurrentDayLessons setLessonsLoaded={setLessonsLoaded} selected={selected} setSelected={setSelected} currentLessons={currentLessons} setCurrentLessons={setCurrentLessons} />
                         }
                     </> :
                     <Center flex={1} px="3">
