@@ -85,7 +85,7 @@ export default function AttendanceList({ navigation }) {
                                     </Row>
 
                                     <Row style={{ width: '15%' }}>
-                                        <Text>{dayjs(lesson.date).format('HH:mm')}</Text>
+                                        <Text>{lesson.start_time}</Text>
                                     </Row>
 
                                     <Row style={{ width: '35%' }}>
