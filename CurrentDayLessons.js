@@ -93,7 +93,7 @@ export default function CurrentDayLessons(props) {
             console.log(err)
             setSending(false)
         })
-
+        setSending(false)
     }
 
     const sendAttendance = async (l) => {
@@ -112,7 +112,7 @@ export default function CurrentDayLessons(props) {
             //check if lesson in class
             if (l.in_class) {
                 await getLocation().then(() => {
-                    if(parseInt(location.lat) > 0 && parseInt(location.lon)){
+                    if (parseInt(location.lat) > 0 && parseInt(location.lon)) {
                         const inRadius = Distance.getDistanceFromLatLonInMeters(location.lat, location.lon, l.latitude, l.longitude) < 30
                         if (!inRadius) {
                             alert("You are too far from the!")
@@ -121,7 +121,7 @@ export default function CurrentDayLessons(props) {
                         }
                         console.log(l.latitude + " " + l.longitude + " Lecturer Location")
                         console.log(location.lat + " " + location.lon + " Student Location")
-                    }else{
+                    } else {
                         alert("Couldnt recieve location")
                     }
                 })
@@ -132,8 +132,8 @@ export default function CurrentDayLessons(props) {
         }
         if (signed == 'Lecturer') {
             if (l.in_class) {
-                await getLocation().then(r => {
-                    if(parseInt(location.lat) > 0 && parseInt(location.lon) > 0){
+                await getLocation().then(() => {
+                    if (parseInt(location.lat) > 0 && parseInt(location.lon) > 0) {
                         l.latitude = location.lat
                         l.longitude = location.lon
                         console.log(location)
@@ -318,13 +318,13 @@ export default function CurrentDayLessons(props) {
                     </Modal.Header>
                     <ScrollView style={{ padding: 20 }}>
                         <Row style={{ marginBottom: 18 }}>
-                            <Row style={{ width: '30%',marginEnd:4 }}>
+                            <Row style={{ width: '30%', marginEnd: 4 }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>ID</Text>
                             </Row>
-                            <Row style={{ width: '40%',marginEnd:4 }}>
+                            <Row style={{ width: '40%', marginEnd: 4 }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Name</Text>
                             </Row>
-                            <Row style={{ width: '30%', justifyContent:'center' }}>
+                            <Row style={{ width: '30%', justifyContent: 'center' }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Present</Text>
                             </Row>
                         </Row>
@@ -332,10 +332,10 @@ export default function CurrentDayLessons(props) {
                             attendancyList &&
                             attendancyList.map((student, idx) => {
                                 return <Row key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottomColor: '#ebebeb', borderBottomWidth: 1, }}>
-                                    <Row style={{ width: '30%',marginEnd:4 }}>
+                                    <Row style={{ width: '30%', marginEnd: 4 }}>
                                         <Text>{student.id}</Text>
                                     </Row>
-                                    <Row style={{ width: '40%',marginEnd:4 }}>
+                                    <Row style={{ width: '40%', marginEnd: 4 }}>
                                         <Text>{student.first_name} {student.last_name}</Text>
                                     </Row>
                                     <Row style={{ width: '30%', justifyContent: 'center' }}>

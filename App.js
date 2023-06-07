@@ -26,9 +26,6 @@ export default function App() {
   const [signed, setSigned] = useState("Student");
   const value = { signed, setSigned };
 
-  useEffect(() => {
-    setSigned('')
-  }, [])
 
   return (
     <SignedAsContext.Provider
