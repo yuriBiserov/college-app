@@ -14,8 +14,13 @@ import { useState } from 'react';
 import SignedAsContext from './services/GlobalContext';
 import { useEffect } from 'react';
 import AttendanceList from './AttendanceList';
+import { I18nManager } from 'react-native';
 
 export default function App() {
+  I18nManager.forceRTL(false)
+  I18nManager.allowRTL(false)
+  I18nManager.swapLeftAndRightInRTL(false);
+
   const Drawer = createDrawerNavigator();
 
   const [signed, setSigned] = useState("Student");

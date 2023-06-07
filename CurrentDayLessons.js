@@ -83,6 +83,7 @@ export default function CurrentDayLessons(props) {
 
     const getLocation = async () => {
         setSending(true)
+        await Location.requestForegroundPermissionsAsync();
         await Location.getCurrentPositionAsync({}).then((r) => {
             location.lat = r.coords.latitude
             location.lon = r.coords.longitude
@@ -305,7 +306,7 @@ export default function CurrentDayLessons(props) {
 
 
             <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-                <Modal.Content width="100%">
+                <Modal.Content width="90%">
                     <Modal.CloseButton />
                     <Modal.Header>
                         <Row>
@@ -317,13 +318,13 @@ export default function CurrentDayLessons(props) {
                     </Modal.Header>
                     <ScrollView style={{ padding: 20 }}>
                         <Row style={{ marginBottom: 18 }}>
-                            <Row style={{ width: '30%' }}>
+                            <Row style={{ width: '30%',marginEnd:4 }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>ID</Text>
                             </Row>
-                            <Row style={{ width: '50%' }}>
+                            <Row style={{ width: '40%',marginEnd:4 }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Name</Text>
                             </Row>
-                            <Row style={{ width: '20%' }}>
+                            <Row style={{ width: '30%', justifyContent:'center' }}>
                                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Present</Text>
                             </Row>
                         </Row>
@@ -331,13 +332,13 @@ export default function CurrentDayLessons(props) {
                             attendancyList &&
                             attendancyList.map((student, idx) => {
                                 return <Row key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottomColor: '#ebebeb', borderBottomWidth: 1, }}>
-                                    <Row style={{ width: '30%' }}>
+                                    <Row style={{ width: '30%',marginEnd:4 }}>
                                         <Text>{student.id}</Text>
                                     </Row>
-                                    <Row style={{ width: '50%' }}>
+                                    <Row style={{ width: '40%',marginEnd:4 }}>
                                         <Text>{student.first_name} {student.last_name}</Text>
                                     </Row>
-                                    <Row style={{ width: '20%', justifyContent: 'center' }}>
+                                    <Row style={{ width: '30%', justifyContent: 'center' }}>
                                         <Text>{student.present ?
                                             <Icon xmlSpace="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512"><Path fill="#99e384" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"></Path></Icon>
                                             :
